@@ -1,12 +1,11 @@
 mod utils;
 use std::str;
-use std::collections::HashMap;
 
 
 fn compare(a: &str, b: &str) -> i32 {
-    let comparison = vec!["A", "B", "C"];
+    // let comparison = vec!["A", "B", "C"];
     // pos_a = comparison.position()
-    return match (a, b) {
+    match (a, b) {
         (x, y) if x == y => 0,
         ("A", "B") => -1,
         ("A", "C") => 1,
@@ -21,10 +20,10 @@ fn compare(a: &str, b: &str) -> i32 {
 fn get_my_choice<'a>(opponent_choice: &'a str, desired_outcome: &'a str) -> &'a str {
     let comparison = ["A", "B", "C"];
     let pos_opponent = comparison.iter().position(|&x| x == opponent_choice).unwrap();
-    return match (opponent_choice, desired_outcome) {
-        (y, "X") => comparison[(pos_opponent + 2) % 3],
+    match (opponent_choice, desired_outcome) {
+        (_, "X") => comparison[(pos_opponent + 2) % 3],
         (x, "Y") => x,
-        (y, "Z") => comparison[(pos_opponent + 1) % 3],
+        (_, "Z") => comparison[(pos_opponent + 1) % 3],
             _ => todo!()
     }
 }
@@ -45,7 +44,7 @@ fn handle_pair(mut p: std::str::Split<&str>) -> i32 {
         _  => todo!()
     };
     let result_score = (compare(my_choice, pair.0) + 1) * 3;
-    return my_choice_score + result_score;
+    my_choice_score + result_score
 
 }
 
