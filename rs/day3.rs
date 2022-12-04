@@ -19,8 +19,22 @@ fn handle_line(line: &String) -> u32 {
     let sh_set: HashSet<char> = second_half.chars().collect();
     let intersection_value_ch = fh_set.intersection(&sh_set).next().unwrap();
     get_priority(intersection_value_ch)
-    // println!("{}", intersection_value_ch);
-    // println!("{}", inters_value);
+}
+
+fn get_badge_total(v: &Vec<String>) -> u32 {
+    let i = v.chunks(3);
+    let mut sum: u32 = 0;
+    for chunk in i {
+        let common_value_set = chunk.iter()
+            .map(|c: &String| -> HashSet<char>{ c.chars().into_iter().collect()});
+        let common_values = common_value_set
+            .reduce(|x: HashSet<char>, y: HashSet<char>| -> HashSet<char> {
+                x.intersection(&y).cloned().collect()
+            }
+            ).unwrap();
+        sum += get_priority(common_values.iter().next().unwrap());
+    }
+    return sum;
 }
 
 fn main() -> Result<(), std::io::Error> {
@@ -29,7 +43,7 @@ fn main() -> Result<(), std::io::Error> {
         .map(|p| p.unwrap()).collect();
     let total: u32 = lines.iter().map(handle_line).sum();
     println!("total: {:?}", total);
-    // let badge_total: u32 = get_badge_total(&lines);
-    // println!("total: {:?}", total);
+    let badge_total: u32 = get_badge_total(&lines);
+    println!("badge_total: {:?}", badge_total);
     Ok(())
 }
