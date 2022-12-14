@@ -1,6 +1,7 @@
 mod utils;
 
 use std::str::FromStr;
+use std::vec::Drain;
 
 #[derive(Debug)]
 struct Stack {
@@ -13,6 +14,13 @@ impl Stack {
     }
     fn push(&mut self, item: char) -> () {
         self.st.push(item)
+    }
+    fn len(&self) -> usize {
+        self.st.len()
+    }
+    fn remove(&mut self, n: usize) -> Drain<char> {
+        let length = self.len();
+        self.st.drain(length - n..)
     }
 }
 
@@ -48,17 +56,17 @@ fn parse_stacks(items: &[String]) -> Vec<Stack> {
     r
 }
 
-fn parse_stack_section(stack_text: Vec<String>) -> Vec<Stack> {
+fn parse_stack_section(stack_text: &Vec<String>) -> Vec<Stack> {
     let (all_but_last, last_line_vec) = utils::split_slice(&stack_text, stack_text.len() - 1);
     let count = last_line_vec[0]
         .split_whitespace()
         .map(u8::from_str)
         .count();
-    let items = parse_stacks(all_but_last);
+    let items = parse_stacks(&all_but_last);
     items
 }
 
-fn parse_instructions(inst_text: Vec<String>) -> Vec<Instruction> {
+fn parse_instructions(inst_text: &Vec<String>) -> Vec<Instruction> {
     fn parse_inst(t: &String) -> Instruction {
         let words: Vec<&str> = t.split_whitespace().collect();
         Instruction {
@@ -70,13 +78,25 @@ fn parse_instructions(inst_text: Vec<String>) -> Vec<Instruction> {
     inst_text.iter().map(parse_inst).collect()
 }
 
-fn apply_instructions(stacks: &mut Vec<Stack>, instructions: &Vec<Instruction>) -> () {
+fn push_items(removed: &[char], to_stack: &mut Stack) -> () {
+    for item in removed {
+        to_stack.push(*item);
+    }
+}
+
+fn apply_instructions(stacks: &mut Vec<Stack>, instructions: &Vec<Instruction>, keep_order: bool) -> () {
     for inst in instructions {
         let from_ind = inst.from - 1;
         let to_ind = inst.to - 1;
-        for _ in 0..inst.quantity {
-            let ch = stacks[from_ind].pop().unwrap();
-            stacks[to_ind].push(ch);
+        if keep_order {
+            let from_stack = &mut stacks[from_ind];
+            let removed: Vec<char> = from_stack.remove(inst.quantity as usize).collect();
+            push_items(&removed, &mut stacks[to_ind]);
+        } else {
+            for _ in 0..inst.quantity {
+                let ch = stacks[from_ind].pop().unwrap();
+                stacks[to_ind].push(ch);
+            }
         }
     }
     ()
@@ -90,15 +110,15 @@ fn parse_data(s: &str) -> Result<(Vec<Stack>, Vec<Instruction>), std::io::Error>
         .take_while(|l| !l.is_empty())
         .collect();
     let instruction_text = file_contents.map(|l| l.unwrap()).collect();
-    let stacks: Vec<Stack> = parse_stack_section(stack_text);
-    let insts: Vec<Instruction> = parse_instructions(instruction_text);
+    let stacks: Vec<Stack> = parse_stack_section(&stack_text);
+    let insts: Vec<Instruction> = parse_instructions(&instruction_text);
 
     Ok((stacks, insts))
 }
 
 fn main() -> Result<(), std::io::Error> {
     let (mut stacks, insts) = parse_data("../inputs/day-5-input.txt")?;
-    apply_instructions(&mut stacks, &insts);
+    apply_instructions(&mut stacks, &insts, true);
     for s in stacks {
         println!("{:?}", s);
     }
