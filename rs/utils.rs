@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
+use std::collections::HashSet;
+use std::hash::Hash;
 
 // The output is wrapped in a Result to allow matching on errors
 // Returns an Iterator to the Reader of the lines of the file.
@@ -30,7 +32,7 @@ pub fn split_every(s: &str, i: usize) -> Vec<String> {
 }
 
 
-pub fn transpose<T: Copy>(m: Vec<Vec<T>>) -> Vec<Vec<T>> {
+pub fn transpose<T: Copy>(m: &Vec<Vec<T>>) -> Vec<Vec<T>> {
     let mut t = vec![Vec::with_capacity(m.len()); m[0].len()];
     for r in m {
         for i in 0..r.len() {
@@ -38,6 +40,14 @@ pub fn transpose<T: Copy>(m: Vec<Vec<T>>) -> Vec<Vec<T>> {
         }
     }
     t
+}
+
+pub fn union<T>(sets: &Vec<HashSet<T>>) -> HashSet<T>
+where T: Eq + Hash + std::clone::Clone {
+    let result = sets.iter().fold(HashSet::new(), |acc, e| {
+        acc.union(e).cloned().collect()
+    });
+    result
 }
 
 

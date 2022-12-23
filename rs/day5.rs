@@ -41,7 +41,8 @@ fn parse_stacks(items: &[String]) -> Vec<Stack> {
             }
         }).collect()
     }
-    let tokens = utils::transpose(items.iter().map(_tokenize_row).collect());
+    let raw_tokens = items.iter().map(_tokenize_row).collect();
+    let tokens = utils::transpose(&raw_tokens);
     let mut r: Vec<Stack> = Vec::with_capacity(tokens.len());
     // let row_length = tokens[0].len();
     for row in tokens {
