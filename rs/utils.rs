@@ -14,16 +14,18 @@ where
     Ok(io::BufReader::new(file).lines())
 }
 
+// Split a slice at index `ind` into two slices, one before `ind` and one after
 pub fn split_slice<P>(items: &[P], ind: usize) -> (&[P], &[P]) {
     (&items[..ind], &items[ind..])
 
 }
 
+// Split a string every i characters and return the chunks
 pub fn split_every(s: &str, i: usize) -> Vec<String> {
     let chars: Vec<char> = s.chars()
         .enumerate()
-        .filter(|(ind, x)| ind % (i + 1) != i)
-        .map(|(ind, x)| x)
+        .filter(|(ind, _)| ind % (i + 1) != i)
+        .map(|(_, x)| x)
         .collect();
     chars
         .chunks(i)
@@ -31,7 +33,7 @@ pub fn split_every(s: &str, i: usize) -> Vec<String> {
         .collect()
 }
 
-
+// Transpose a 2x2 grid
 pub fn transpose<T: Copy>(m: &Vec<Vec<T>>) -> Vec<Vec<T>> {
     let mut t = vec![Vec::with_capacity(m.len()); m[0].len()];
     for r in m {
@@ -42,6 +44,7 @@ pub fn transpose<T: Copy>(m: &Vec<Vec<T>>) -> Vec<Vec<T>> {
     t
 }
 
+// Union of multiple sets
 pub fn union<T>(sets: &Vec<HashSet<T>>) -> HashSet<T>
 where T: Eq + Hash + std::clone::Clone {
     let result = sets.iter().fold(HashSet::new(), |acc, e| {
