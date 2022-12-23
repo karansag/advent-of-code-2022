@@ -5,7 +5,9 @@ use std::path::Path;
 // The output is wrapped in a Result to allow matching on errors
 // Returns an Iterator to the Reader of the lines of the file.
 pub fn read_file<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where P: AsRef<Path>, {
+where
+    P: AsRef<Path>,
+{
     let file = File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
 }
@@ -21,7 +23,10 @@ pub fn split_every(s: &str, i: usize) -> Vec<String> {
         .filter(|(ind, x)| ind % (i + 1) != i)
         .map(|(ind, x)| x)
         .collect();
-    chars.chunks(i).map(|c| c.iter().collect::<String>()).collect()
+    chars
+        .chunks(i)
+        .map(|c| c.iter().collect::<String>())
+        .collect()
 }
 
 
