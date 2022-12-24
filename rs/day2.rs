@@ -1,7 +1,6 @@
 mod utils;
 use std::str;
 
-
 fn compare(a: &str, b: &str) -> i32 {
     // let comparison = vec!["A", "B", "C"];
     // pos_a = comparison.position()
@@ -13,18 +12,21 @@ fn compare(a: &str, b: &str) -> i32 {
         ("B", "A") => 1,
         ("C", "A") => -1,
         ("C", "B") => 1,
-        (&_, _) => todo!()
+        (&_, _) => todo!(),
     }
 }
 
 fn get_my_choice<'a>(opponent_choice: &'a str, desired_outcome: &'a str) -> &'a str {
     let comparison = ["A", "B", "C"];
-    let pos_opponent = comparison.iter().position(|&x| x == opponent_choice).unwrap();
+    let pos_opponent = comparison
+        .iter()
+        .position(|&x| x == opponent_choice)
+        .unwrap();
     match (opponent_choice, desired_outcome) {
         (_, "X") => comparison[(pos_opponent + 2) % 3],
         (x, "Y") => x,
         (_, "Z") => comparison[(pos_opponent + 1) % 3],
-            _ => todo!()
+        _ => todo!(),
     }
 }
 
@@ -41,19 +43,18 @@ fn handle_pair(mut p: std::str::Split<&str>) -> i32 {
         "A" => 1,
         "B" => 2,
         "C" => 3,
-        _  => todo!()
+        _ => todo!(),
     };
     let result_score = (compare(my_choice, pair.0) + 1) * 3;
     my_choice_score + result_score
-
 }
-
 
 fn main() -> Result<(), std::io::Error> {
     let contents = utils::read_file("../inputs/day-2-input.txt")?;
     let total: i32 = contents
         // .take(10)
-        .map(|p| handle_pair(p.unwrap().split(" "))).sum();
+        .map(|p| handle_pair(p.unwrap().split(" ")))
+        .sum();
     println!("total: {:?}", total);
     Ok(())
 }

@@ -33,13 +33,16 @@ struct Instruction {
 fn parse_stacks(items: &[String]) -> Vec<Stack> {
     fn _tokenize_row(row_string: &String) -> Vec<Option<char>> {
         let values = utils::split_every(row_string, 3);
-        values.iter().map(|v| {
-            if v.starts_with('[') {
-                return Some(v.chars().nth(1).unwrap());
-            } else {
-                return None;
-            }
-        }).collect()
+        values
+            .iter()
+            .map(|v| {
+                if v.starts_with('[') {
+                    return Some(v.chars().nth(1).unwrap());
+                } else {
+                    return None;
+                }
+            })
+            .collect()
     }
     let raw_tokens = items.iter().map(_tokenize_row).collect();
     let tokens = utils::transpose(&raw_tokens);
@@ -85,7 +88,11 @@ fn push_items(removed: &[char], to_stack: &mut Stack) -> () {
     }
 }
 
-fn apply_instructions(stacks: &mut Vec<Stack>, instructions: &Vec<Instruction>, keep_order: bool) -> () {
+fn apply_instructions(
+    stacks: &mut Vec<Stack>,
+    instructions: &Vec<Instruction>,
+    keep_order: bool,
+) -> () {
     for inst in instructions {
         let from_ind = inst.from - 1;
         let to_ind = inst.to - 1;

@@ -39,7 +39,7 @@ fn parse_command(s: String) -> ParsedCommand {
     let command_type = match splits[1] {
         x if x == "cd" => CommandType::CD,
         x if x == "ls" => CommandType::LS,
-        _ => panic!("Unsupported command")
+        _ => panic!("Unsupported command"),
     };
     let arg = splits[2].to_string();
     ParsedCommand {
@@ -52,7 +52,9 @@ fn parse_output(s: String) -> ParsedOutput {
     let s2 = s.clone();
     let splits: Vec<&str> = s2.split_whitespace().collect();
     if splits[0] == "dir" {
-        let d = Dir { name: String::from(splits[1])};
+        let d = Dir {
+            name: String::from(splits[1]),
+        };
         return ParsedOutput::D(d);
     } else {
         let f = File {
@@ -61,7 +63,6 @@ fn parse_output(s: String) -> ParsedOutput {
         };
         return ParsedOutput::F(f);
     }
-
 }
 
 fn parse_line(s: String) -> ParsedBash {
@@ -81,38 +82,44 @@ struct NodeFile<'a> {
 }
 
 struct Node<'a> {
-    name:  &'a str,
+    name: &'a str,
     files: Vec<NodeFile<'a>>,
     parent: Option<&'a mut Node<'a>>,
-    children: Vec<&'a mut Node<'a>>
+    children: Vec<&'a mut Node<'a>>,
 }
 
-fn process_bash<'a>(bash_lines: &'a Vec<ParsedBash>, base_node: &'a mut Node) -> &'a mut Node<'a>{
+fn process_bash<'a>(bash_lines: &'a Vec<ParsedBash>, base_node: &'a mut Node) -> &'a mut Node<'a> {
     let mut current_node = base_node;
     for line in bash_lines {
         match line {
             ParsedBash::PO(output) => {
-                    if let ParsedOutput::F(ref file) = output {
-                        let f = current_node.files.iter().find(|n| n.name == file.name);
-                        if let None = f {
-                            let new_file = NodeFile { size: file.size, name: &file.name};
-                            current_node.files.push(new_file);
-                            let mut files = &current_node.files;
-                            files.push(new_file);
-                        }
+                if let ParsedOutput::F(ref file) = output {
+                    let f = current_node.files.iter().find(|n| n.name == file.name);
+                    if let None = f {
+                        let new_file = NodeFile {
+                            size: file.size,
+                            name: &file.name,
+                        };
+                        current_node.files.push(new_file);
+                        let mut files = &current_node.files;
+                        files.push(new_file);
                     }
-                    if let ParsedOutput::D(ref dir) = output {
-                        let d = current_node.children.iter().find(|n| n.name == dir.name);
-                        if let None = d {
-                            let new_node = Node {name: &dir.name, files: vec![], parent: Some(&mut current_node), children: vec![]};
-                            // current_node.files.push(new_file);
-                            // let mut files = &current_node.files;
-                            // files.push(new_file);
-                        }
-
+                }
+                if let ParsedOutput::D(ref dir) = output {
+                    let d = current_node.children.iter().find(|n| n.name == dir.name);
+                    if let None = d {
+                        let new_node = Node {
+                            name: &dir.name,
+                            files: vec![],
+                            parent: Some(&mut current_node),
+                            children: vec![],
+                        };
+                        // current_node.files.push(new_file);
+                        // let mut files = &current_node.files;
+                        // files.push(new_file);
                     }
-
-            },
+                }
+            }
             ParsedBash::PC(command) => {
                 match command.cmd {
                     CommandType::CD => {
@@ -121,21 +128,19 @@ fn process_bash<'a>(bash_lines: &'a Vec<ParsedBash>, base_node: &'a mut Node) ->
                         }
                         if command.arg == ".." {
                             current_node = current_node.parent.unwrap();
-                        }
-                        else {
-                            let children: Vec<&mut Node>  = current_node.children;
+                        } else {
+                            let children: Vec<&mut Node> = current_node.children;
                             // let ch_iter: Iterator<Item=&mut Node> = children.iter();
-                            let x: Option<&mut Node> = children.iter().find(|n| n.name == command.arg).map(|x| *x);
+                            let x: Option<&mut Node> =
+                                children.iter().find(|n| n.name == command.arg).map(|x| *x);
                             current_node = x.unwrap();
                         }
-                    },
-                    CommandType::LS => {
-
                     }
+                    CommandType::LS => {}
                 }
             }
         }
-    };
+    }
 
     let mut ret_node = current_node;
     let parent_opt = current_node.parent;
@@ -144,7 +149,6 @@ fn process_bash<'a>(bash_lines: &'a Vec<ParsedBash>, base_node: &'a mut Node) ->
         parent_opt = ret_node.parent;
     }
     return ret_node;
-
 }
 
 // fn calculate_sizes(&Node base_node) {
@@ -154,14 +158,18 @@ fn process_bash<'a>(bash_lines: &'a Vec<ParsedBash>, base_node: &'a mut Node) ->
 fn main() -> Result<(), std::io::Error> {
     let file_path = &"../inputs/day-7-input.txt";
     let contents = utils::read_file(file_path)?;
-    let parsed_lines: Vec<ParsedBash> = contents.map(|l| l.unwrap()).map(|s: String| {
-        parse_line(s)
-    }).collect();
+    let parsed_lines: Vec<ParsedBash> = contents
+        .map(|l| l.unwrap())
+        .map(|s: String| parse_line(s))
+        .collect();
 
-    let mut base_node = Node {name: &"/", files: vec![], parent: None, children: vec![]};
+    let mut base_node = Node {
+        name: &"/",
+        files: vec![],
+        parent: None,
+        children: vec![],
+    };
     let directory_tree = process_bash(&parsed_lines, &mut base_node);
-
-
 
     Ok(())
 }

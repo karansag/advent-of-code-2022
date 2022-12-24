@@ -7,7 +7,7 @@ use utils::Direction;
 type Grid = Vec<Vec<i8>>;
 type Coord = (usize, usize);
 
-fn read_input<'a, 'b>(file_path: &'b str, grid: &'a mut Grid) -> Result< &'a Grid, std::io::Error> {
+fn read_input<'a, 'b>(file_path: &'b str, grid: &'a mut Grid) -> Result<&'a Grid, std::io::Error> {
     let contents = utils::read_file(file_path)?;
     let parsed_lines = contents.map(|l| l.unwrap());
     for l in parsed_lines {
@@ -21,7 +21,7 @@ fn read_input<'a, 'b>(file_path: &'b str, grid: &'a mut Grid) -> Result< &'a Gri
     Ok(grid)
 }
 
-fn vis_row<R: Iterator<Item=usize>>(row: &Vec<i8>, range: R) -> Vec<usize> {
+fn vis_row<R: Iterator<Item = usize>>(row: &Vec<i8>, range: R) -> Vec<usize> {
     let mut current_max = -1;
     let mut visible_inds = vec![];
     for ind in range {
@@ -41,7 +41,7 @@ fn calc_visibility(grid: &Grid, direction: Direction) -> HashSet<Coord> {
 
     let mut result = HashSet::new();
     for (row_ind, row) in grid.iter().enumerate() {
-        let iter: Box<dyn Iterator<Item=usize>> = match direction {
+        let iter: Box<dyn Iterator<Item = usize>> = match direction {
             Direction::Left | Direction::Top => Box::new((0..n_cols).into_iter()),
             Direction::Right | Direction::Bottom => Box::new((0..n_cols).rev()),
         };
@@ -66,22 +66,20 @@ fn trees_viewable(row: &Vec<i8>, position: usize, direction: Direction) -> u32 {
         let result = x.take_while(|v| *v < &house_val).count() as u32;
 
         if result < pos_u32 {
-            return result + 1 ;
+            return result + 1;
         } else {
-            return result ;
+            return result;
         }
     } else {
         let x = row[position + 1..row.len()].iter();
         let result = x.take_while(|v| *v < &house_val).count() as u32;
         if result < (rowl_u32 - pos_u32 - 1) {
-            return result + 1 ;
+            return result + 1;
         } else {
-            return result ;
+            return result;
         }
     }
 }
-
-
 
 fn scenic_score(grid: &Grid, t_grid: &Grid, coord: &Coord) -> u32 {
     let (r, c) = *coord;
@@ -109,7 +107,10 @@ fn main() -> Result<(), std::io::Error> {
     let ys = 0..grid[0].len();
     let coords = ys.flat_map(|y| xs.clone().map(move |x| (x, y)));
 
-    let max_scenic_score = coords.map(|coord| scenic_score(&grid, &t_grid, &coord)).max().unwrap();
+    let max_scenic_score = coords
+        .map(|coord| scenic_score(&grid, &t_grid, &coord))
+        .max()
+        .unwrap();
 
     println!("Max scenic score: {:?}", max_scenic_score);
 

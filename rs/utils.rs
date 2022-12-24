@@ -1,9 +1,8 @@
+use std::collections::HashSet;
 use std::fs::File;
+use std::hash::Hash;
 use std::io::{self, BufRead};
 use std::path::Path;
-use std::collections::HashSet;
-use std::hash::Hash;
-
 
 #[derive(PartialEq, Debug)]
 pub enum Direction {
@@ -26,12 +25,12 @@ where
 // Split a slice at index `ind` into two slices, one before `ind` and one after
 pub fn split_slice<P>(items: &[P], ind: usize) -> (&[P], &[P]) {
     (&items[..ind], &items[ind..])
-
 }
 
 // Split a string every i characters and return the chunks
-pub fn split_every(s: &str, i: usize) -> Vec<String> {
-    let chars: Vec<char> = s.chars()
+pub fn spuit_every(s: &str, i: usize) -> Vec<String> {
+    let chars: Vec<char> = s
+        .chars()
         .enumerate()
         .filter(|(ind, _)| ind % (i + 1) != i)
         .map(|(_, x)| x)
@@ -55,13 +54,14 @@ pub fn transpose<T: Copy>(m: &Vec<Vec<T>>) -> Vec<Vec<T>> {
 
 // Union of multiple sets
 pub fn union<T>(sets: &Vec<HashSet<T>>) -> HashSet<T>
-where T: Eq + Hash + std::clone::Clone {
-    let result = sets.iter().fold(HashSet::new(), |acc, e| {
-        acc.union(e).cloned().collect()
-    });
+where
+    T: Eq + Hash + std::clone::Clone,
+{
+    let result = sets
+        .iter()
+        .fold(HashSet::new(), |acc, e| acc.union(e).cloned().collect());
     result
 }
-
 
 fn main() -> Result<(), std::io::Error> {
     Ok(())

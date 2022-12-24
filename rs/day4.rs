@@ -3,7 +3,6 @@ mod utils;
 use std::collections::HashSet;
 use std::str::FromStr;
 
-
 fn overlap(p1: &[i32; 2], p2: &[i32; 2]) -> bool {
     p2[0] <= p1[1] && p2[1] >= p1[0]
 }
@@ -30,8 +29,10 @@ fn parse(s: String) -> Vec<[i32; 2]> {
     let f2 = first_pair.next().unwrap();
     let s1 = second_pair.next().unwrap();
     let s2 = second_pair.next().unwrap();
-    vec![[i32::from_str(f1).unwrap(), i32::from_str(f2).unwrap()],
-     [i32::from_str(s1).unwrap(), i32::from_str(s2).unwrap()]]
+    vec![
+        [i32::from_str(f1).unwrap(), i32::from_str(f2).unwrap()],
+        [i32::from_str(s1).unwrap(), i32::from_str(s2).unwrap()],
+    ]
 }
 
 fn main() -> Result<(), std::io::Error> {
@@ -39,12 +40,16 @@ fn main() -> Result<(), std::io::Error> {
     let total_overlap: [i32; 2] = contents
         .map(|p| p.unwrap())
         .map(|p| parse(p))
-        .map(|pair| [pair_contains(&pair[0], &pair[1]), pair_overlaps(&pair[0], &pair[1])])
+        .map(|pair| {
+            [
+                pair_contains(&pair[0], &pair[1]),
+                pair_overlaps(&pair[0], &pair[1]),
+            ]
+        })
         .reduce(|acc, next| [acc[0] + next[0], acc[1] + next[1]])
         .unwrap();
 
     println!("total overlap: {}", total_overlap[0]);
     println!("any overlap: {}", total_overlap[1]);
     Ok(())
-
 }
