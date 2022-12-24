@@ -2,14 +2,7 @@ mod utils;
 
 use std::collections::HashSet;
 use std::iter::Iterator;
-
-#[derive(PartialEq)]
-enum Direction {
-    Left,
-    Right,
-    Top,
-    Bottom,
-}
+use utils::Direction;
 
 type Grid = Vec<Vec<i8>>;
 type Coord = (usize, usize);

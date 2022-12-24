@@ -4,6 +4,15 @@ use std::path::Path;
 use std::collections::HashSet;
 use std::hash::Hash;
 
+
+#[derive(PartialEq, Debug)]
+pub enum Direction {
+    Left,
+    Right,
+    Top,
+    Bottom,
+}
+
 // The output is wrapped in a Result to allow matching on errors
 // Returns an Iterator to the Reader of the lines of the file.
 pub fn read_file<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
