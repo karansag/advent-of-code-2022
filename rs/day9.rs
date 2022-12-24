@@ -66,35 +66,41 @@ fn calc_tail(tail_pos: &Coord, head_pos: &Coord) -> Coord {
 
 }
 
-fn proc_inst(inst: &Instruction, head_pos: &Coord, tail_pos: &Coord, visited: &mut HashSet<Coord>) -> (Coord, Coord) {
-    println!("Inst: {:?}", inst);
-    // println!("head / tail start of inst: {:?}, {:?}", head_pos, tail_pos);
+// Plan: get the current positions.
+// At each step --
+
+// Move the head, store that.
+// Move each of the rest, store that.
+// Make the stored results the new positions
+fn proc_inst<'a>(inst: &'a Instruction, positions: &'a Vec<Coord>, visited: &'a mut HashSet<Coord>) -> Vec<Coord> {
+    // println!("Inst: {:?}", inst);
     let (dir, num) = inst;
-    let mut new_head: Coord = *head_pos;
-    let mut new_tail: Coord = *tail_pos;
-    for i in 0..*num {
-        // println!("Exeucting instruction..., {}", i);
-        new_head = move_c(&new_head, dir);
-        new_tail = calc_tail(&new_tail, &new_head);
-        // println!("new tail {:?}", new_tail);
-        visited.insert(new_tail);
-        // println!("head / tail pos: {:?}, {:?}", new_head, new_tail);
+    let mut new_positions: Vec<Coord> = vec![];
+    let mut positions_tmp: Vec<Coord> = positions.iter().cloned().collect();
+    let mut tmp_tail: Coord = (0, 0);
+    for _ in 0..*num {
+        new_positions.push(move_c(&positions_tmp[0], dir));
+        positions_tmp[1..].iter().cloned().fold(new_positions[0], |prev, next| {
+            tmp_tail = calc_tail(&next, &prev);
+            new_positions.push(tmp_tail);
+            tmp_tail
+        });
+        visited.insert(tmp_tail);
+        positions_tmp = new_positions;
+        new_positions = vec![];
     }
-    // println!("{:?}", visited);
-    (new_head, new_tail)
+    positions_tmp
 }
+
 // Process each of the instructions
 // To do this, track the position of the head after each instruction and the position of the tail
 // This involves calculating the new position of the tail after the head movement
 // After calculating the new coordinates, add the result to the set
-fn process_instructions(insts: &Vec<Instruction>, visited: &mut HashSet<Coord>) -> () {
-   let mut head_position: Coord = (0, 0);
-    let mut tail_position: Coord = (0, 0);
-
+fn process_instructions(insts: &Vec<Instruction>, visited: &mut HashSet<Coord>, num_knots: i32) -> () {
+    let mut positions: Vec<Coord> = vec![(0, 0); num_knots as usize];
     for inst in insts {
-        (head_position, tail_position) = proc_inst(&inst, &head_position, &tail_position, visited);
+        positions = proc_inst(&inst, &positions, visited);
     }
-    ()
 }
 
 fn main() -> Result<(), std::io::Error> {
@@ -102,12 +108,14 @@ fn main() -> Result<(), std::io::Error> {
     let parsed_lines: Vec<Instruction> = contents.map(|l| l.unwrap()).map(parse_line).collect();
     let mut visited: HashSet<Coord> = HashSet::new();
     visited.insert((0, 0));
-    process_instructions(&parsed_lines, &mut visited);
+    process_instructions(&parsed_lines, &mut visited, 2);
 
 
-    println!("Number of visited coordinates: {:?}", visited.len());
-    // for x in visited {
-    //     println!("{:?}", x);
-    // }
+    println!("Number of visited coordinates with two knots: {:?}", visited.len());
+
+    let mut visited_part2: HashSet<Coord> = HashSet::new();
+    visited_part2.insert((0, 0));
+    process_instructions(&parsed_lines, &mut visited_part2, 10);
+    println!("Number of visited coordinates with ten knots: {:?}", visited_part2.len());
     Ok(())
 }
