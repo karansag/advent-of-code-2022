@@ -1,15 +1,15 @@
 use serde::Deserialize;
 use std::cmp::Ordering;
+use std::collections::HashSet;
 use std::fs;
 use std::io::{BufRead, BufReader};
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, Eq, Hash, Ord)]
 #[serde(untagged)]
 enum Value {
     Vec(Vec<Value>),
     Int(i32),
 }
-
 
 fn eval(s: &str) -> Value {
     let value: Value = serde_json::from_str(s).unwrap();
@@ -54,8 +54,11 @@ fn order(left: &Value, right: &Value) -> Ordering {
     if let Value::Int(left_int) = left {
         return match right {
             Value::Int(right_int) => left_int.cmp(right_int),
-            Value::Vec(v) => order(&Value::Vec(vec![Value::Int(*left_int)]), &Value::Vec(v.to_vec())),
-        }
+            Value::Vec(v) => order(
+                &Value::Vec(vec![Value::Int(*left_int)]),
+                &Value::Vec(v.to_vec()),
+            ),
+        };
     }
     {
         if let Value::Int(right_int) = right {
@@ -65,6 +68,9 @@ fn order(left: &Value, right: &Value) -> Ordering {
     if let Value::Vec(left_v) = left {
         if let Value::Vec(right_v) = right {
             if left_v.is_empty() {
+                if right_v.is_empty() {
+                    return Ordering::Equal;
+                }
                 return Ordering::Less;
             } else if right_v.is_empty() {
                 return Ordering::Greater;
@@ -72,27 +78,64 @@ fn order(left: &Value, right: &Value) -> Ordering {
             let (l_head, l_tail) = head_tail(&left_v);
             let (r_head, r_tail) = head_tail(&right_v);
             return match order(l_head, r_head) {
-                Ordering::Equal => order(&Value::Vec(l_tail.to_vec()), &Value::Vec(r_tail.to_vec())),
-                x => x
-            }
+                Ordering::Equal => {
+                    order(&Value::Vec(l_tail.to_vec()), &Value::Vec(r_tail.to_vec()))
+                }
+                x => x,
+            };
         };
     };
     todo!();
 }
 
-fn main() -> Result<(), std::io::Error> {
-    let pairs = read_pairs("../../inputs/day-13-input.txt");
+impl PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        order(&self, other) == Ordering::Equal
+    }
+}
 
-    let sum: usize  = pairs
+impl PartialOrd for Value {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(order(&self, other))
+    }
+}
+
+fn main() -> Result<(), std::io::Error> {
+    let pairs_str = read_pairs("../../inputs/day-13-input.txt");
+
+    let mut packets: Vec<Value> = pairs_str
         .iter()
         .map(|p| (eval(&p[0]), eval(&p[1])))
-        .enumerate()
-        .map(|(i, pair)| (i, order(&pair.0, &pair.1)))
-        .filter(|(_, order)| *order == Ordering::Less || *order == Ordering::Equal)
-        .map(|(i, _)| i + 1)
-        .sum();
+        .map(|pair| {
+            if order(&pair.0, &pair.1) == Ordering::Greater {
+                (pair.1, pair.0)
+            } else {
+                pair
+            }
+        })
+        .flat_map(|pair| vec![pair.0, pair.1])
+        .collect();
+    let divider_packets = vec![
+        Value::Vec(vec![Value::Vec(vec![Value::Int(2)])]),
+        Value::Vec(vec![Value::Vec(vec![Value::Int(6)])]),
+    ];
+    let divider_packets_2: HashSet<Value> = vec![
+        Value::Vec(vec![Value::Vec(vec![Value::Int(2)])]),
+        Value::Vec(vec![Value::Vec(vec![Value::Int(6)])]),
+    ]
+    .into_iter()
+    .collect();
+    packets.extend(divider_packets);
+    packets.sort();
 
-    println!("sum: {:?}", sum);
+    let product: usize = packets
+        .iter()
+        .enumerate()
+        .filter(|(_, packet)| divider_packets_2.contains(&packet))
+        .map(|(i, _)| i + 1)
+        .product();
+
+    println!("product: {:?}", product);
 
     Ok(())
 }
