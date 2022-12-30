@@ -77,7 +77,6 @@ fn main() -> Result<(), std::io::Error> {
     counts.sort();
     println!("score: {:?}", counts[6] * counts[7]);
 
-
     Ok(())
 }
 

@@ -4,6 +4,8 @@ use std::hash::Hash;
 use std::io::{self, BufRead};
 use std::path::Path;
 
+pub type Coord = (usize, usize);
+
 #[derive(PartialEq, Debug)]
 pub enum Direction {
     Left,
@@ -28,7 +30,7 @@ pub fn split_slice<P>(items: &[P], ind: usize) -> (&[P], &[P]) {
 }
 
 // Split a string every i characters and return the chunks
-pub fn spuit_every(s: &str, i: usize) -> Vec<String> {
+pub fn split_every(s: &str, i: usize) -> Vec<String> {
     let chars: Vec<char> = s
         .chars()
         .enumerate()

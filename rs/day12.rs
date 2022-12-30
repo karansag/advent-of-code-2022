@@ -1,8 +1,6 @@
-use std::fs;
 use std::collections::HashMap;
 use std::collections::VecDeque;
-
-
+use std::fs;
 
 type Map = Vec<Vec<char>>;
 type Coord = (usize, usize);
@@ -41,7 +39,7 @@ fn char_to_height(ch: char) -> i32 {
 fn find_path(map: &Map, start: &Coord, end: &Coord) -> Option<Vec<Coord>> {
     let rows = map.len() as i32;
     let cols = map[0].len() as i32;
-    let get_neighbors = |coord: &Coord|  -> Vec<Coord> {
+    let get_neighbors = |coord: &Coord| -> Vec<Coord> {
         let c = (coord.0 as i32, coord.1 as i32);
         let coord_height = char_to_height(map[coord.0][coord.1]);
         let cartesian_product = [(-1, 0), (0, -1), (1, 0), (0, 1)];
@@ -49,7 +47,7 @@ fn find_path(map: &Map, start: &Coord, end: &Coord) -> Option<Vec<Coord>> {
             .iter()
             .map(|(xd, yd)| (c.0 + xd, c.1 + yd))
             // Bounds of map
-            .filter(|(x, y)| -1 < *x  && *x < rows && -1 < *y && *y < cols)
+            .filter(|(x, y)| -1 < *x && *x < rows && -1 < *y && *y < cols)
             // Allowed to ascend based on height
             .filter(|(x, y)| {
                 let (x_coord, y_coord) = (*x as usize, *y as usize);
@@ -72,7 +70,6 @@ fn find_path(map: &Map, start: &Coord, end: &Coord) -> Option<Vec<Coord>> {
             .filter(|x| **x != *start && !previous.contains_key(*x))
             .collect();
 
-
         for coord in neighbors {
             let c: Coord = *coord;
             previous.insert(c, next);
@@ -84,7 +81,7 @@ fn find_path(map: &Map, start: &Coord, end: &Coord) -> Option<Vec<Coord>> {
         }
     }
     if !found {
-        return None
+        return None;
     }
     let mut ret: Vec<Coord> = vec![*end];
     let mut curr = end;
@@ -101,10 +98,7 @@ fn main() -> Result<(), std::io::Error> {
     let map: Vec<Vec<_>> = file_contents
         .split('\n')
         .filter(|s| !s.is_empty())
-        .map(|s| {
-            s.chars()
-                .collect()
-        })
+        .map(|s| s.chars().collect())
         .collect();
     let start_coordinate = get_first_coordinate(&map, &'S').unwrap();
     let end_coordinate = get_first_coordinate(&map, &'E').unwrap();
@@ -114,7 +108,9 @@ fn main() -> Result<(), std::io::Error> {
 
     let coords_with_a = get_all_coords(&map, &'a');
     println!("{:?}", coords_with_a.len());
-    let min_val = coords_with_a.iter().map(|c| find_path(&map, c, &end_coordinate))
+    let min_val = coords_with_a
+        .iter()
+        .map(|c| find_path(&map, c, &end_coordinate))
         .filter(|x| *x != None)
         .map(|x| match x {
             Some(p) => p.len() - 1,
@@ -124,7 +120,6 @@ fn main() -> Result<(), std::io::Error> {
 
     // println!("{:?}", vals);
     println!("min: ${:?}", min_val);
-
 
     Ok(())
 }

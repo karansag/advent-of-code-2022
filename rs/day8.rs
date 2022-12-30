@@ -2,10 +2,10 @@ mod utils;
 
 use std::collections::HashSet;
 use std::iter::Iterator;
+use utils::Coord;
 use utils::Direction;
 
 type Grid = Vec<Vec<i8>>;
-type Coord = (usize, usize);
 
 fn read_input<'a, 'b>(file_path: &'b str, grid: &'a mut Grid) -> Result<&'a Grid, std::io::Error> {
     let contents = utils::read_file(file_path)?;
