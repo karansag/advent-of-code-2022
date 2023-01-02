@@ -18,6 +18,19 @@ enum GridState {
 
 type Grid = HashMap<Coord, GridState>;
 
+trait WithFloor {
+    fn get_with_floor(&self, coord: &Coord, floor: usize) -> Option<&GridState>;
+}
+impl WithFloor for Grid {
+    fn get_with_floor(&self, coord: &Coord, floor: usize) -> Option<&GridState> {
+        if floor == coord.1 {
+            Some(&GridState::Rock)
+        } else {
+            self.get(coord)
+        }
+    }
+}
+
 fn parse_rock(l: String) -> Rock {
     fn make_point(s: &str) -> Coord {
         let pairs: Vec<&str> = s.split(',').collect();
@@ -76,41 +89,56 @@ fn group_by_column(g: &Grid, by_column: &mut HashMap<usize, Vec<Coord>>) -> () {
     }
 }
 
-fn drop_grain(grid: &Grid, by_column: &HashMap<usize, Vec<Coord>>, start: Coord) -> Option<Coord> {
+fn drop_grain(
+    grid: &Grid,
+    by_column: &HashMap<usize, Vec<Coord>>,
+    start: Coord,
+    floor_y: usize,
+) -> Option<Coord> {
+    // Part 1 end state
     // Check if sand will go into the void
-    if let Some(v) = by_column.get(&start.0) {
-        let max = v.iter().map(|(_, y)| y).max();
-        if let Some(m) = max {
-            if m < &start.1 {
-                return None;
-            }
-        }
-    } else {
-        return None;
-    }
+    // if let Some(v) = by_column.get(&start.0) {
+    //     let max = v.iter().map(|(_, y)| y).max();
+    //     if let Some(m) = max {
+    //         if m < &start.1 {
+    //             return None;
+    //         }
+    //     }
+    // } else {
+    //     return None;
+    // }
     let cur_coord = start;
     let below_coord = (cur_coord.0, cur_coord.1 + 1);
     let below_lcoord = (cur_coord.0 - 1, cur_coord.1 + 1);
     let below_rcoord = (cur_coord.0 + 1, cur_coord.1 + 1);
 
-    if grid.get(&below_coord) == None {
-        drop_grain(grid, by_column, below_coord)
-    } else if grid.get(&below_lcoord) == None {
-        drop_grain(grid, by_column, below_lcoord)
-    } else if grid.get(&below_rcoord) == None {
-        drop_grain(grid, by_column, below_rcoord)
+    if grid.get_with_floor(&below_coord, floor_y) == None {
+        drop_grain(grid, by_column, below_coord, floor_y)
+    } else if grid.get_with_floor(&below_lcoord, floor_y) == None {
+        drop_grain(grid, by_column, below_lcoord, floor_y)
+    } else if grid.get_with_floor(&below_rcoord, floor_y) == None {
+        drop_grain(grid, by_column, below_rcoord, floor_y)
     } else {
         Some(cur_coord)
     }
 }
 
-fn drop_sand(g: &mut Grid, by_column: &mut HashMap<usize, Vec<Coord>>, start: Coord) -> i32 {
+fn drop_sand(
+    g: &mut Grid,
+    by_column: &mut HashMap<usize, Vec<Coord>>,
+    start: Coord,
+    floor_y: usize,
+) -> i32 {
     let mut grains = 0;
     let mut cont = true;
 
     while cont {
-        let rest_spot = drop_grain(&g, &by_column, start);
+        let rest_spot = drop_grain(&g, &by_column, start, floor_y);
+
         if let Some(coord) = rest_spot {
+            if coord == (500, 0) {
+                cont = false;
+            }
             g.insert(coord, GridState::Sand);
             let v = match by_column.entry(coord.0) {
                 Vacant(entry) => entry.insert(Vec::new()),
@@ -126,6 +154,10 @@ fn drop_sand(g: &mut Grid, by_column: &mut HashMap<usize, Vec<Coord>>, start: Co
     grains
 }
 
+fn find_floor_y(g: &Grid) -> usize {
+    g.iter().map(|(k, _)| k.1).max().unwrap() + 2
+}
+
 fn main() -> Result<(), std::io::Error> {
     let lines = utils::read_file("../inputs/day-14-input.txt")?;
     let data: Vec<Rock> = lines.map(|l| l.unwrap()).map(parse_rock).collect();
@@ -133,12 +165,12 @@ fn main() -> Result<(), std::io::Error> {
     let mut grid: Grid = HashMap::new();
     let mut by_column: HashMap<usize, Vec<Coord>> = HashMap::new();
     fill_grid(data, &mut grid);
-    println!("{:?}", grid.get(&(487, 90)));
-    let grid_ref = &grid;
-    group_by_column(grid_ref, &mut by_column);
-    println!("{:?}", by_column.get(&487));
+    group_by_column(&grid, &mut by_column);
 
-    let droplets = drop_sand(&mut grid, &mut by_column, (500, 0));
+    // Could do this by iterating over Rocks rather than the grid
+    let floor_y = find_floor_y(&grid);
+
+    let droplets = drop_sand(&mut grid, &mut by_column, (500, 0), floor_y);
     println!("Number of sand drops: {:?}", droplets);
 
     Ok(())
