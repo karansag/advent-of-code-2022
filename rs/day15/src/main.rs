@@ -5,6 +5,8 @@ use lazy_static::lazy_static;
 use range_union_find::IntRangeUnionFind;
 use regex::Regex;
 use std::collections::HashSet;
+use std::cmp;
+use rayon::prelude::*;
 
 type Coord = (i32, i32);
 
@@ -43,6 +45,64 @@ fn mh_dist(x: &Coord, y: &Coord) -> i32 {
     (x1 - x2).abs() + (y1 - y2).abs()
 }
 
+const MAX: i32 = 4000000;
+const MIN: i32 = 0;
+
+fn observed_spots_row(signal_beacon_pairs: &Vec<SigPair>, distances: &Vec<i32>, row: i32) -> usize {
+        let mut range_union = IntRangeUnionFind::<i32>::new();
+
+    signal_beacon_pairs
+        .iter()
+        .map(|sp: &SigPair| &sp.signal)
+        .zip(distances)
+        .map(|(s, bc_d): (&Signal, &i32)| {
+            let x = s.0 .0;
+            let y = s.0 .1;
+            let y_dist = (y - row).abs();
+            let bc_dist = *bc_d;
+            if y_dist <= bc_dist {
+                let lower = cmp::max(MIN, x - bc_dist + y_dist);
+                let upper = cmp::min(MAX, x + bc_dist - y_dist);
+                lower..=upper
+            } else {
+                -1..=0
+            }
+        })
+        .for_each(|r| {
+            range_union.insert_range(&r);
+        });
+
+    // let row_beacons: Vec<i32> = signal_beacon_pairs
+    //     .iter()
+    //     .map(|sp| &sp.beacon)
+    //     .filter(|b| b.0 .1 == row.into())
+    //     .collect::<HashSet<&Beacon>>()
+    //     .iter()
+    //     .map(|b| b.0 .0)
+    //     .collect();
+    let sum: usize = range_union
+        .to_collection::<Vec<RangeInclusive<i32>>>()
+        .iter()
+        .cloned()
+        .map(|r: RangeInclusive<i32>| {
+            // let excluded_beacons = row_beacons
+            //     .iter()
+            //     .clone()
+            //     .filter(|beacon_coord| r.contains(&beacon_coord))
+            //     .count();
+            let mut counter = 0;
+            for _ in r {
+                counter += 1;
+            }
+            counter
+            // counter - excluded_beacons
+        })
+        .sum();
+
+    sum
+}
+
+
 fn main() -> Result<(), std::io::Error> {
     // let y_star = 10;
     let y_star = 2000000;
@@ -60,55 +120,18 @@ fn main() -> Result<(), std::io::Error> {
         .map(|sp: &SigPair| mh_dist(&sp.signal.0, &sp.beacon.0))
         .collect();
 
-    let mut range_union = IntRangeUnionFind::<i32>::new();
+    // let sum = observed_spots_row(&signal_beacon_pairs, &distances, y_star);
 
-    signal_beacon_pairs
-        .iter()
-        .map(|sp: &SigPair| &sp.signal)
-        .zip(distances)
-        .map(|(s, bc_d): (&Signal, i32)| {
-            let x = s.0 .0 as i32;
-            let y = s.0 .1 as i32;
-            let y_dist = (y - y_star).abs() as i32;
-            let bc_dist = bc_d as i32;
-            if y_dist <= bc_dist {
-                (x - bc_dist + y_dist)..=(x + bc_dist - y_dist)
-            } else {
-                -1..=0
-            }
-        })
-        .for_each(|r| {
-            range_union.insert_range(&r);
-        });
+    let mut par_iter = (0..=4000000).map(|x| observed_spots_row(&signal_beacon_pairs, &distances, y_star)).enumerate().filter(|(_, x)| *x < 4000002);
 
-    let y_star_beacons: Vec<i32> = signal_beacon_pairs
-        .iter()
-        .map(|sp| &sp.beacon)
-        .filter(|b| b.0 .1 == y_star.into())
-        .collect::<HashSet<&Beacon>>()
-        .iter()
-        .map(|b| b.0 .0)
-        .collect();
+    let results: Vec<_> = par_iter.collect();
+    println!("results {:?}", results);
 
-    let sum: usize = range_union
-        .to_collection::<Vec<RangeInclusive<i32>>>()
-        .iter()
-        .cloned()
-        .map(|r: RangeInclusive<i32>| {
-            let excluded_beacons = y_star_beacons
-                .iter()
-                .clone()
-                .filter(|beacon_coord| r.contains(&beacon_coord))
-                .count();
-            let mut counter = 0;
-            for _ in r {
-                counter += 1;
-            }
-            counter - excluded_beacons
-        })
-        .sum();
 
-    println!("sum: {}", sum);
+
+    // println!("sum: {}", sum);
+    // println!("count: {}", count);
+
 
     Ok(())
 }
