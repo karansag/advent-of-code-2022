@@ -3,10 +3,10 @@ mod utils;
 use core::ops::RangeInclusive;
 use lazy_static::lazy_static;
 use range_union_find::IntRangeUnionFind;
-use regex::Regex;
-use std::collections::HashSet;
-use std::cmp;
 use rayon::prelude::*;
+use regex::Regex;
+use std::cmp;
+use std::collections::HashSet;
 
 type Coord = (i32, i32);
 
@@ -46,10 +46,15 @@ fn mh_dist(x: &Coord, y: &Coord) -> i32 {
 }
 
 const MAX: i32 = 4000000;
+// const MAX: i32 = 20;
 const MIN: i32 = 0;
 
-fn observed_spots_row(signal_beacon_pairs: &Vec<SigPair>, distances: &Vec<i32>, row: i32) -> usize {
-        let mut range_union = IntRangeUnionFind::<i32>::new();
+fn observed_spots_row(
+    signal_beacon_pairs: &Vec<SigPair>,
+    distances: &Vec<i32>,
+    row: i32,
+) -> Vec<RangeInclusive<i32>> {
+    let mut range_union = IntRangeUnionFind::<i32>::new();
 
     signal_beacon_pairs
         .iter()
@@ -65,7 +70,7 @@ fn observed_spots_row(signal_beacon_pairs: &Vec<SigPair>, distances: &Vec<i32>, 
                 let upper = cmp::min(MAX, x + bc_dist - y_dist);
                 lower..=upper
             } else {
-                -1..=0
+                0..=-1
             }
         })
         .for_each(|r| {
@@ -80,34 +85,38 @@ fn observed_spots_row(signal_beacon_pairs: &Vec<SigPair>, distances: &Vec<i32>, 
     //     .iter()
     //     .map(|b| b.0 .0)
     //     .collect();
-    let sum: usize = range_union
-        .to_collection::<Vec<RangeInclusive<i32>>>()
-        .iter()
-        .cloned()
-        .map(|r: RangeInclusive<i32>| {
-            // let excluded_beacons = row_beacons
-            //     .iter()
-            //     .clone()
-            //     .filter(|beacon_coord| r.contains(&beacon_coord))
-            //     .count();
-            let mut counter = 0;
-            for _ in r {
-                counter += 1;
-            }
-            counter
-            // counter - excluded_beacons
-        })
-        .sum();
+    let ranges = range_union.to_collection::<Vec<RangeInclusive<i32>>>();
+    if ranges.len() > 1 {
+        println!("row {:?} is a possibility", row);
+    }
 
-    sum
+    ranges
+
+    // .iter()
+    // .cloned()
+    // .map(|r: RangeInclusive<i32>| {
+    //     // let excluded_beacons = row_beacons
+    //     //     .iter()
+    //     //     .clone()
+    //     //     .filter(|beacon_coord| r.contains(&beacon_coord))
+    //     //     .count();
+    //     let mut counter = 0;
+    //     for _ in r {
+    //         counter += 1;
+    //     }
+    //     counter
+    //     // counter - excluded_beacons
+    // })
+    // .sum();
+
+    // sum
 }
-
 
 fn main() -> Result<(), std::io::Error> {
     // let y_star = 10;
-    let y_star = 2000000;
-    // let file_path = &"../../inputs/day-15-ex.txt";
+    // let y_star = 2000000;
     let file_path = &"../../inputs/day-15-input.txt";
+    // let file_path = &"../../inputs/day-15-input.txt";
     let contents = utils::read_file(file_path)?;
     let signal_beacon_pairs: Vec<SigPair> = contents
         .map(|l| l.unwrap())
@@ -122,16 +131,24 @@ fn main() -> Result<(), std::io::Error> {
 
     // let sum = observed_spots_row(&signal_beacon_pairs, &distances, y_star);
 
-    let mut par_iter = (0..=4000000).map(|x| observed_spots_row(&signal_beacon_pairs, &distances, y_star)).enumerate().filter(|(_, x)| *x < 4000002);
+    // Find the (consolidated) range that has more than one element. That's the one
+    // that has a gap in it
+    let mut par_iter = (0..=MAX)
+        .map(|x| observed_spots_row(&signal_beacon_pairs, &distances, x))
+        .enumerate()
+        .find(|(_, v)| v.len() > 1);
 
-    let results: Vec<_> = par_iter.collect();
-    println!("results {:?}", results);
-
-
+    if let Some(found_tup) = par_iter {
+        println!("results {:?}", found_tup);
+        // tuning freq: x * 4000000 + y
+        let tuning = (found_tup.0 * 4000000) as i32 + (found_tup.1[0].end() + 1) as i32;
+        println!("tuning frequency: {}", tuning);
+    } else {
+        println!("didn't find anything");
+    }
 
     // println!("sum: {}", sum);
     // println!("count: {}", count);
-
 
     Ok(())
 }
